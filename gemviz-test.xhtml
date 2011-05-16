@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html 
+      PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:svg="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink">
+<head>
+<title>SVG Tests</title>
+</head>
+<body>
+
+<svg:svg version="1.1" width="100%" height="500" id="paper">
+  <style>
+    @namespace "http://www.w3.org/2000/svg";
+    .genre {
+      font-size: 24px;
+      fill: white;
+      stroke: none;
+      cursor: pointer;
+    }
+    .genre rect {
+      stroke: black;
+      fill: white;
+    }
+    .genre text {
+      fill: black;
+    }
+  </style>
+  <svg:defs>
+  </svg:defs>
+
+  <svg:g id="template-bar">
+    <svg:rect width="100%" height="50" fill="#66A">
+    </svg:rect>
+    <svg:g class="genre" id="genre-template" transform="translate(10,7)">
+      <svg:rect height="34" width="140" rx="5" ry="5"></svg:rect>
+      <svg:text x="10" y="24" >New Genre</svg:text>
+    </svg:g>
+  </svg:g>
+</svg:svg>
+
+<style>
+  body {
+    margin: 0;
+  }
+  body, p, h3 {
+    font-family: "Helvetica", sans-serif;
+  }
+  .yui3-genreeditor {
+    width: 200px;
+    height: 100px;
+    background-color: #EEF;
+    border: 1px solid #66A;
+  }
+  .yui3-genreeditor-hidden {
+    visibility: hidden;
+  }
+  .yui3-genreeditor .yui3-widget-hd {
+    background-color: #66A;
+    padding: 4px;
+    overflow: auto;
+    cursor: pointer;
+  }
+  .yui3-genreeditor h3 {
+    color: #EEF;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-align: center;
+    margin: 0 0;
+  }
+  .yui3-genreeditor .yui3-widget-bd {
+    padding: 4px;
+  }
+  .yui3-genreeditor .editor-close {
+    float: right;
+    background-color: #66A;
+  }
+</style>
+
+<div class="yui3-genreeditor yui3-genreeditor-hidden">
+  <div class="yui3-widget-hd">
+    <h3>
+      Edit Genre
+      <img class="editor-close" src="closewhite.png" />
+    </h3>
+  </div>
+  <div class="yui3-widget-bd">
+    <label for='genre-name'>Name:</label>
+    <input id='genre-name' type="text" name="name" value="" />
+  </div>
+</div>
+
+<script type="text/javascript" src="http://yui.yahooapis.com/combo?3.3.0/build/yui/yui-min.js"></script>
+<script>
+<![CDATA[
+window.Y = YUI({ filter: 'RAW' }).use('node', 'base', 'widget', 'dd', 'overlay', 'collection', function (Y) {
+  Y.DD.DDM.set('clickPixelThresh', 0);
+
+  var GenreEditor = Y.Base.create('genreEditor', Y.Overlay, [], {
+    initializer: function (config) {
+      var nameInput = this.get('nameInput');
+      this.after('genreChange', this.syncUI, this);
+      nameInput.on('keyup', this.syncGenre, this);
+      nameInput.on('valueChange', this.syncGenre, this);
+      this.get('closeButton').on('click', this.hide, this);
+    },
+    syncUI: function () {
+      var genre = this.get('genre'),
+          name = genre && genre.get('name') || '';
+      this.set('align', {
+        node: genre.get('g'),
+        points: [Y.WidgetPositionAlign.TL, Y.WidgetPositionAlign.BR]
+      }),
+      this.get('nameInput').set('value', name);
+    },
+    syncGenre: function () {
+      var genre = this.get('genre');
+      if (genre) {
+        genre.set('name', this.get('nameInput').get('value'));
+      }
+    },
+    edit: function (genre, where) {
+      this.set('genre', genre);
+      if (where)
+        this.set('xy', where);
+      this.render();
+      this.show();
+    }
+  }, {
+    ATTRS: {
+      closeButton: {},
+      genre: {},
+      nameInput: {}
+    },
+    HTML_PARSER: {
+      closeButton: '.editor-close',
+      nameInput: 'input[name=name]'
+    }
+  });
+  var genreEditor = new GenreEditor({
+    boundingBox: '.yui3-genreeditor',
+    contentBox: '.yui3-genreeditor-hidden',
+    render: false,
+    visible: false
+  });
+  window.genreEditor = genreEditor;
+
+  var GenreWidget = Y.GenreWidget = Y.Base.create('genre', Y.Base, [], {
+    initializer: function (config) {
+      var g = this.get('g'),
+          translation = g._node.transform.baseVal.getItem(0);
+      this.g = g;
+      this.translation = translation;
+      this.rect = g.one('rect'),
+      this.text = g.one('text');
+
+      this.after('nameChange', this.nameDidChange, this);
+      this.after('originChange', this.originDidChange, this);
+
+      // Called by Drag 'n Drop to relocate the element
+      g.setXY = function (xy) {
+        translation.setTranslate.apply(translation, xy);
+      };
+      this.dd = new Y.DD.Drag({node: g, useShim: false});
+      this.dd.on('drag:start', function (evt) {
+        this.rect.setStyle('fill', '#CCC');
+      }, this);
+      this.dd.on('drag:end', function (evt) {
+        // This is probably not exactly kosher
+        this.set('origin', [translation.matrix.e, translation.matrix.f]);
+        this.rect.setStyle('fill', '#FFF');
+        if (config.template) {
+          new GenreWidget({name: config.name, origin: this.dd.actXY});
+        }
+      }, this);
+      if (config.template)
+        this.dd.plug(Y.Plugin.DDProxy, {moveOnEnd: false, cloneNode: true});
+
+      this.text.on('dblclick', function (evt) {
+        genreEditor.edit(this, [evt.clientX + 15, evt.clientY + 15]);
+      }, this);
+
+      if (config.origin)
+        this.originDidChange({ newVal: config.origin });
+      this.get('parentNode').appendChild(g);
+      this.nameDidChange({newVal: config.name});
+
+      g.on('mousedown', function (evt) {
+        // Prevent text selection
+        evt.preventDefault();
+      }, this);
+
+      if (! config.template)
+        GenreWidget.instances[Y.stamp(this)] = this;
+    },
+    destructor: function () {
+      delete GenreWidget.instances[Y.stsamp(this)];
+    },
+    // NB: text length and size are not available until the element is in the DOM
+    nameDidChange: function (evt) {
+      var text = this.text,
+          bbox = text._node.getBBox();
+      text.set('text', evt.newVal);
+      this.rect.setAttribute('width', text._node.getComputedTextLength() + 20);
+      //this.rect.setAttribute('height', Math.round(bbox.height) + 10);
+    },
+    originDidChange: function (evt) {
+      this.g.setXY(evt.newVal);
+    },
+    toJSON: function () {
+      return this.getAttrs(['name', 'origin']);
+    }
+  }, {
+    ATTRS: {
+      g: {
+        setter: Y.one,
+        valueFn: function () {
+          var newG = GenreWidget.templateG.cloneNode(true);
+          newG.removeAttribute('id');
+          return newG;
+        }
+      },
+      name: {
+        validator: Y.Lang.isString,
+        value: ''
+      },
+      origin: {
+        // don't fire change events when the origin hasn't changed
+        validator: function (newPoint) {
+          var oldPoint = this.get('origin');
+          if (oldPoint)
+            return oldPoint[0] != newPoint[0] || oldPoint[1] != newPoint[1];
+          else
+            return Y.Lang.isNumber(newPoint[0]) && Y.Lang.isNumber(newPoint[1]);
+        },
+        valueFn: function () {
+          if (this.translation)
+            return [this.translation.matrix.e, this.translation.matrix.f];
+          else
+            return [0, 0];
+        }
+      },
+      parentNode: { value: Y.one('#paper') },
+      render: { value: true },
+      template: { value: false }
+    },
+    templateG: Y.one('#genre-template'),
+    instances: {},
+    instanceMetadata: function () {
+      var instances = Y.Object.values(this.instances);
+      return Y.Array.map(instances, function (instance) {
+        return instance.toJSON();
+      }, this);
+    }
+  });
+  window.genreTemplate = new GenreWidget({name: "New Genre", g: Y.one('#genre-template'), template: true});
+});
+]]>
+</script>
+</body>
+</html>
