@@ -1,0 +1,11 @@
+tags
+*.vim
+*.swp
+*.swo
+*.log
+*.log.*
+*.pid
+*.cache
+*.pyc
+*.pyo
+.DS_Store
