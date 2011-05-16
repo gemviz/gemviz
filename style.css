@@ -1,0 +1,35 @@
+body {
+  margin: 0;
+}
+body, p, h3 {
+  font-family: "Helvetica", sans-serif;
+}
+.yui3-genreeditor {
+  width: 200px;
+  height: 100px;
+  background-color: #EEF;
+  border: 1px solid #66A;
+}
+.yui3-genreeditor-hidden {
+  visibility: hidden;
+}
+.yui3-genreeditor .yui3-widget-hd {
+  background-color: #66A;
+  padding: 4px;
+  overflow: auto;
+  cursor: pointer;
+}
+.yui3-genreeditor h3 {
+  color: #EEF;
+  font-size: 0.8em;
+  font-weight: bold;
+  text-align: center;
+  margin: 0 0;
+}
+.yui3-genreeditor .yui3-widget-bd {
+  padding: 4px;
+}
+.yui3-genreeditor .editor-close {
+  float: right;
+  background-color: #66A;
+}
