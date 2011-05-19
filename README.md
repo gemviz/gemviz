@@ -1,4 +1,6 @@
 Gemviz - the genre ecology model visualizer
+Copyright (C) 2011 Peter Abrahamsen
+Produced as part of the Communicative Practices in Virtual Workspaces research group, directed by Professor Mark Zachry at the University of Washington, Seattle, Washington, USA.
 
 https://github.com/gemviz/gemviz
 
