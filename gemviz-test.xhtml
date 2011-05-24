@@ -75,8 +75,8 @@ window.YUI_config = {
   }
 }
 
-YUI().use('gemviz-genre', 'node', function (Y) {
-  window.genreTemplate = new Y.Genre({name: "New Genre", g: Y.one('#genre-template'), template: true});
+window.Y = YUI().use('gemviz-genre', 'node', function (Y) {
+  window.genreTemplate = new Y.Genre({name: "New Genre", g: Y.one('#genre-template'), isTemplate: true});
 });
 ]]>
 </script>

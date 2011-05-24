@@ -27,6 +27,7 @@ YUI.add('gemviz-genre', function (Y) {
       var genre = this,
           g = this.get('g'),
           translation = g._node.transform.baseVal.getItem(0);
+      g.genre = this;
       this.g = g;
       this.translation = translation;
       this.rect = g.one('rect'),
@@ -39,7 +40,13 @@ YUI.add('gemviz-genre', function (Y) {
       g.setXY = function (xy) {
         translation.setTranslate.apply(translation, xy);
       };
+      /*
       this.dd = new Y.DD.Drag({node: g, useShim: false});
+      this.dd.on('drag:mouseDown', function (evt) {
+        if (evt.ev.altKey) {
+          evt.preventDefault();
+        }
+      }, this);
       this.dd.on('drag:start', function (evt) {
         this.rect.setStyle('fill', '#CCC');
       }, this);
@@ -53,6 +60,16 @@ YUI.add('gemviz-genre', function (Y) {
       }, this);
       if (config.template)
         this.dd.plug(Y.Plugin.DDProxy, {moveOnEnd: false, cloneNode: true});
+      */
+      if (config.isTemplate) {
+        this.dd = new Y.DD.Drag({node: g, useShim: false});
+        this.dd.plug(Y.Plugin.DDProxy, {moveOnEnd: false, cloneNode: true});
+        this.dd.on('drag:end', function (evt) {
+          new Genre({name: config.name, origin: this.dd.actXY});
+        }, this);
+      } else {
+        Genre.dragDelegate.createDrop(g);
+      }
 
       this.text.on('dblclick', function (evt) {
         Y.use('gemviz-genre-editor', function (Y) {
@@ -70,7 +87,7 @@ YUI.add('gemviz-genre', function (Y) {
         evt.preventDefault();
       }, this);
 
-      if (! config.template)
+      if (! config.isTemplate)
         Genre.instances[Y.stamp(this)] = this;
     },
     destructor: function () {
@@ -87,6 +104,38 @@ YUI.add('gemviz-genre', function (Y) {
     originDidChange: function (evt) {
       this.g.setXY(evt.newVal);
     },
+    dropHit: function (evt) {
+      var source = evt.drag.get('node'),
+          ourBounds = this.g._node.getClientRects()[0],
+          theirBounds = source._node.getClientRects()[0],
+          line = document.createElementNS("http://www.w3.org/2000/svg", "svg:line");
+      line.setAttribute('x1', (ourBounds.left + ourBounds.right)/2.0);
+      line.setAttribute('y1', (ourBounds.top + ourBounds.bottom)/2.0);
+      line.setAttribute('x2', (theirBounds.left + theirBounds.right)/2.0);
+      line.setAttribute('y2', (thierBounds.top + theirBounds.bottom)/2.0);
+      line.style.stroke = "black";
+      this.g.get('parentNode').insert(line, 0);
+    },
+    beginConnection: function () {
+      var body = Y.one(document.body),
+          line = document.createElementNS("http://www.w3.org/2000/svg", "svg:line"),
+          ourBounds = this.g._node.getClientRects()[0],
+          moveHandle;
+      line.setAttribute('x1', (ourBounds.left + ourBounds.right)/2.0);
+      line.setAttribute('y1', (ourBounds.top + ourBounds.bottom)/2.0);
+      line.style.stroke = "black";
+      this.g.get('parentNode').insertBefore(line, this.g);
+      moveHandle = body.on('mousemove', function (evt) {
+        line.setAttribute('x2', evt.clientX);
+        line.setAttribute('y2', evt.clientY);
+      }, this);
+      body.once('mouseup', function (evt) {
+        moveHandle.detach();
+        line.parentNode.removeChild(line);
+      }, this);
+    },
+    connectTo: function (target) {
+    },
     toJSON: function () {
       return this.getAttrs(['name', 'origin']);
     }
@@ -100,6 +149,7 @@ YUI.add('gemviz-genre', function (Y) {
           return newG;
         }
       },
+      isTemplate: { value: false },
       name: {
         validator: Y.Lang.isString,
         value: ''
@@ -134,4 +184,30 @@ YUI.add('gemviz-genre', function (Y) {
     }
   });
   Y.Genre = Genre;
+
+  var dragDelegate = new Y.DD.Delegate({
+    cont: '#paper',
+    dragMode: 'intersect',
+    nodes: '.genre',
+    target: true
+  });
+  dragDelegate.on('drag:start', function (evt) {
+    //
+  });
+  dragDelegate.on('drag:end', function (evt) {
+    //
+  });
+  dragDelegate.on('drag:drophit', function (evt) {
+    console.log(evt);
+    alert("!!");
+    //
+  });
+  dragDelegate.on('drag:dropmiss', function (evt) {
+    var g = this.get('currentNode');
+    if (g.genre.get('isTemplate')) {
+      g.setXY(evt.target.startXY);
+      alert('template!');
+    }
+  });
+  Genre.dragDelegate = dragDelegate;
 }, '0.1', { requires: ['base', 'dd', 'collection'] });
