@@ -21,8 +21,9 @@
 
 YUI.add('gemviz-genre', function (Y) {
   Y.DD.DDM.set('clickPixelThresh', 0);
-
-  var Genre = Y.Base.create('genre', Y.Base, [], {
+  
+  var gemviz = Y.namespace('gemviz'),
+      Genre = gemviz.Genre = Y.Base.create('genre', Y.Base, [], {
     initializer: function (config) {
       var genre = this,
           g = this.get('g'),
@@ -40,36 +41,20 @@ YUI.add('gemviz-genre', function (Y) {
       g.setXY = function (xy) {
         translation.setTranslate.apply(translation, xy);
       };
-      /*
-      this.dd = new Y.DD.Drag({node: g, useShim: false});
-      this.dd.on('drag:mouseDown', function (evt) {
-        if (evt.ev.altKey) {
-          evt.preventDefault();
-        }
-      }, this);
-      this.dd.on('drag:start', function (evt) {
-        this.rect.setStyle('fill', '#CCC');
-      }, this);
-      this.dd.on('drag:end', function (evt) {
-        // This is probably not exactly kosher
-        this.set('origin', [translation.matrix.e, translation.matrix.f]);
-        this.rect.setStyle('fill', '#FFF');
-        if (config.template) {
-          new Genre({name: config.name, origin: this.dd.actXY});
-        }
-      }, this);
-      if (config.template)
-        this.dd.plug(Y.Plugin.DDProxy, {moveOnEnd: false, cloneNode: true});
-      */
       if (config.isTemplate) {
         this.dd = new Y.DD.Drag({node: g, useShim: false});
         this.dd.plug(Y.Plugin.DDProxy, {moveOnEnd: false, cloneNode: true});
         this.dd.on('drag:end', function (evt) {
           new Genre({name: config.name, origin: this.dd.actXY});
         }, this);
-      } else {
-        Genre.dragDelegate.createDrop(g);
       }
+
+      g.on('click', function (evt) {
+        if (evt.altKey) {
+          evt.halt();
+          Genre.handleConnection(this);
+        }
+      }, this);
 
       this.text.on('dblclick', function (evt) {
         Y.use('gemviz-genre-editor', function (Y) {
@@ -174,7 +159,11 @@ YUI.add('gemviz-genre', function (Y) {
       render: { value: true },
       template: { value: false }
     },
-    templateG: Y.one('#genre-template'),
+    beginConnection: function (target) {
+      this.connectionSource = target;
+      Y.one('body').on('mousemove', function (evt) {
+      }, this);
+    },
     instances: {},
     instanceMetadata: function () {
       var instances = Y.Object.values(this.instances);
@@ -183,31 +172,4 @@ YUI.add('gemviz-genre', function (Y) {
       }, this);
     }
   });
-  Y.Genre = Genre;
-
-  var dragDelegate = new Y.DD.Delegate({
-    cont: '#paper',
-    dragMode: 'intersect',
-    nodes: '.genre',
-    target: true
-  });
-  dragDelegate.on('drag:start', function (evt) {
-    //
-  });
-  dragDelegate.on('drag:end', function (evt) {
-    //
-  });
-  dragDelegate.on('drag:drophit', function (evt) {
-    console.log(evt);
-    alert("!!");
-    //
-  });
-  dragDelegate.on('drag:dropmiss', function (evt) {
-    var g = this.get('currentNode');
-    if (g.genre.get('isTemplate')) {
-      g.setXY(evt.target.startXY);
-      alert('template!');
-    }
-  });
-  Genre.dragDelegate = dragDelegate;
 }, '0.1', { requires: ['base', 'dd', 'collection'] });

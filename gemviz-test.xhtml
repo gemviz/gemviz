@@ -61,22 +61,26 @@
 <![CDATA[
 "use strict";
 
-window.YUI_config = {
+var YUI_config = {
   filter: 'DEBUG',
   groups: {
     gemviz: {
       combine: false,
       base: 'js/',
       modules: {
-        "gemviz-genre": { path: 'genre.js', requires: ['base', 'node', 'dd', 'collection'] },
-        "gemviz-genre-editor": { path: "genre-editor.js", requires: ['overlay'] }
+        "gemviz-genre": { path: 'genre.js', requires: ['base', 'dd', 'collection'] },
+        "gemviz-genre-editor": { path: "genre-editor.js", requires: ['overlay'] },
+        "gemviz-graph": { path: "graph.js", requires: ['gemviz-genre'] }
       }
     }
   }
 }
 
-window.Y = YUI().use('gemviz-genre', 'node', function (Y) {
-  window.genreTemplate = new Y.Genre({name: "New Genre", g: Y.one('#genre-template'), isTemplate: true});
+window.Y = YUI(YUI_config).use('gemviz-graph', 'node', function (Y) {
+  window.graph = new Y.gemviz.Graph({
+    container: '#paper',
+    templateG: Y.one('#genre-template')
+  });
 });
 ]]>
 </script>
