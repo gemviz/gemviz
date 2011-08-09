@@ -11,7 +11,7 @@ body, p, h3 {
   border: 1px solid #66A;
 }
 .yui3-genreeditor-hidden {
-  visibility: hidden;
+  display: none;
 }
 .yui3-genreeditor .yui3-widget-hd {
   background-color: #66A;

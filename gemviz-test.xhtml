@@ -7,13 +7,28 @@
       xmlns:xlink="http://www.w3.org/1999/xlink">
 <head>
 <title>SVG Tests</title>
+<link rel="stylesheet" href="http://yui.yahooapis.com/2.8.0r4/build/reset-fonts-grids/reset-fonts-grids.css" type="text/css" />
 <link rel="stylesheet" href="style.css" media="screen" type="text/css" />
+<style type="text/css">
+  html, body, #doc3, #bd, #yui-main, #yui-main > .yui-b, #yui-main > .yui-b > .yui-g, #paper {
+    height: 98%;
+    margin: 0 0;
+  }
+  
+  label {
+    font-weight: bold;
+  }
+</style>
 <meta name="copyright" content="Copyright 2011" />
 <meta name="author" content="Peter Abrahamsen" />
 </head>
-<body>
+<body class="yui-skin-sam">
+<div id="doc3" class="yui-t5">
+<div id="bd" role="main">
+<div id="yui-main">
+<div class="yui-b"><div class="yui-g">
 
-<svg:svg version="1.1" width="100%" height="500" id="paper">
+<svg:svg version="1.1" id="paper">
   <style>
     @namespace "http://www.w3.org/2000/svg";
     .genre {
@@ -29,19 +44,30 @@
     .genre text {
       fill: black;
     }
+    .template {
+      display: none;
+    }
   </style>
   <svg:defs>
   </svg:defs>
 
-  <svg:g id="template-bar">
-    <svg:rect width="100%" height="50" fill="#66A">
-    </svg:rect>
-    <svg:g class="genre" id="genre-template" transform="translate(10,7)">
-      <svg:rect height="34" width="140" rx="5" ry="5"></svg:rect>
-      <svg:text x="10" y="24" >New Genre</svg:text>
-    </svg:g>
+  <svg:g class="genre template" id="genre-template" transform="translate(10,7)">
+    <svg:rect height="34" width="140" rx="5" ry="5"></svg:rect>
+    <svg:text x="10" y="24" >New Genre</svg:text>
   </svg:g>
 </svg:svg>
+
+</div></div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="yui-b">
+<label for="addGenre">Genres</label><br/>
+<input type="text" name="genreNmae" id="addGenre" placeholder="New Genre" />
+</div>
+
+</div>
+</div>
 
 <div class="yui3-genreeditor yui3-genreeditor-hidden">
   <div class="yui3-widget-hd">
