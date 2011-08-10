@@ -51,7 +51,7 @@
   <svg:defs>
   </svg:defs>
 
-  <svg:g class="genre template" id="genre-template" transform="translate(10,7)">
+  <svg:g class="genre template" transform="translate(10,7)">
     <svg:rect height="34" width="140" rx="5" ry="5"></svg:rect>
     <svg:text x="10" y="24" >New Genre</svg:text>
   </svg:g>
@@ -82,7 +82,7 @@
   </div>
 </div>
 
-<script type="text/javascript" src="http://yui.yahooapis.com/combo?3.3.0/build/yui/yui-debug.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/3.3.0/build/yui/yui-debug.js"></script>
 <script>
 <![CDATA[
 "use strict";
@@ -103,10 +103,17 @@ var YUI_config = {
 }
 
 window.Y = YUI(YUI_config).use('gemviz-graph', 'node', function (Y) {
-  window.graph = new Y.gemviz.Graph({
-    container: '#paper',
-    templateG: Y.one('#genre-template')
-  });
+  var gemviz = Y.namespace('gemviz'),
+      graph = window.graph = new gemviz.Graph({
+                container: '#paper',
+                template: Y.one('.genre.template')
+              });
+  Y.on('key', function (evt) {
+    var input = evt.currentTarget,
+        name = input.get('value'),
+        genre = graph.newGenre(name);
+    input.set('value', '');
+  }, '#addGenre', 'down:13');
 });
 ]]>
 </script>

@@ -14,24 +14,21 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with Gemviz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
-
 YUI.add('gemviz-genre', function (Y) {
+  "use strict";
+
   Y.DD.DDM.set('clickPixelThresh', 0);
   
   var gemviz = Y.namespace('gemviz'),
       Genre = gemviz.Genre = Y.Base.create('genre', Y.Base, [], {
     initializer: function (config) {
-      var genre = this,
-          g = this.get('g'),
-          translation = g._node.transform.baseVal.getItem(0);
-      g.genre = this;
-      this.g = g;
-      this.translation = translation;
-      this.rect = g.one('rect'),
+      var g = this.g = config.g,
+          genre = g.genre = this,
+          translation = this.translation = g._node.transform.baseVal.getItem(0);
+      this.rect = g.one('rect');
       this.text = g.one('text');
 
       this.after('nameChange', this.nameDidChange, this);
@@ -41,13 +38,6 @@ YUI.add('gemviz-genre', function (Y) {
       g.setXY = function (xy) {
         translation.setTranslate.apply(translation, xy);
       };
-      if (config.isTemplate) {
-        this.dd = new Y.DD.Drag({node: g, useShim: false});
-        this.dd.plug(Y.Plugin.DDProxy, {moveOnEnd: false, cloneNode: true});
-        this.dd.on('drag:end', function (evt) {
-          new Genre({name: config.name, origin: this.dd.actXY});
-        }, this);
-      }
 
       g.on('click', function (evt) {
         if (evt.altKey) {
@@ -71,9 +61,6 @@ YUI.add('gemviz-genre', function (Y) {
         // Prevent text selection
         evt.preventDefault();
       }, this);
-
-      if (! config.isTemplate)
-        Genre.instances[Y.stamp(this)] = this;
     },
     destructor: function () {
       delete Genre.instances[Y.stsamp(this)];
@@ -97,7 +84,7 @@ YUI.add('gemviz-genre', function (Y) {
       line.setAttribute('x1', (ourBounds.left + ourBounds.right)/2.0);
       line.setAttribute('y1', (ourBounds.top + ourBounds.bottom)/2.0);
       line.setAttribute('x2', (theirBounds.left + theirBounds.right)/2.0);
-      line.setAttribute('y2', (thierBounds.top + theirBounds.bottom)/2.0);
+      line.setAttribute('y2', (theirBounds.top + theirBounds.bottom)/2.0);
       line.style.stroke = "black";
       this.g.get('parentNode').insert(line, 0);
     },
@@ -128,13 +115,7 @@ YUI.add('gemviz-genre', function (Y) {
     ATTRS: {
       g: {
         setter: Y.one,
-        valueFn: function () {
-          var newG = Genre.templateG.cloneNode(true);
-          newG.removeAttribute('id');
-          return newG;
-        }
       },
-      isTemplate: { value: false },
       name: {
         validator: Y.Lang.isString,
         value: ''
@@ -144,7 +125,7 @@ YUI.add('gemviz-genre', function (Y) {
         validator: function (newPoint) {
           var oldPoint = this.get('origin');
           if (oldPoint)
-            return oldPoint[0] != newPoint[0] || oldPoint[1] != newPoint[1];
+            return oldPoint[0] !== newPoint[0] || oldPoint[1] !== newPoint[1];
           else
             return Y.Lang.isNumber(newPoint[0]) && Y.Lang.isNumber(newPoint[1]);
         },
@@ -157,18 +138,10 @@ YUI.add('gemviz-genre', function (Y) {
       },
       parentNode: { value: Y.one('#paper') },
       render: { value: true },
-      template: { value: false }
     },
     beginConnection: function (target) {
       this.connectionSource = target;
       Y.one('body').on('mousemove', function (evt) {
-      }, this);
-    },
-    instances: {},
-    instanceMetadata: function () {
-      var instances = Y.Object.values(this.instances);
-      return Y.Array.map(instances, function (instance) {
-        return instance.toJSON();
       }, this);
     }
   });

@@ -14,16 +14,16 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with Gemviz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
-
 YUI.add('gemviz-graph', function (Y) {
+  "use strict";
+
   var gemviz = Y.namespace('gemviz'),
       Graph = gemviz.Graph = Y.Base.create('graph', Y.Base, [], {
     initializer: function (config) {
-      this.set('template', new gemviz.Genre({name: "New Genre", g: config.templateG, isTemplate: true}));
+      this.instances = {};
 
       var dragDelegate = this.DD = new Y.DD.Delegate({
         cont: config.container,
@@ -35,11 +35,32 @@ YUI.add('gemviz-graph', function (Y) {
       dragDelegate.on('drag:end', this.onDragEnd, this);
       dragDelegate.on('drag:drophit', this.onDropHit, this);
       dragDelegate.on('drag:dropmiss', this.onDropMiss, this);
+
+      this.publish('didAddGenre', {});
+    },
+    addGenre: function (genre) {
+      var stamp = Y.stamp(genre);
+      this.instances[stamp] = genre;
+      this.fire('didAddGenre', genre);
+    },
+    newGenre: function (name) {
+      var genre = new gemviz.Genre({
+            name: name,
+            g: this._newGenreG()
+          });
+      this.addGenre(genre);
+      return genre;
+    },
+    _newGenreG: function () {
+      var g = this.get('template').cloneNode(true);
+      // Remove the 'template' class. removeClass does not work on SVG elements.
+      g.setAttribute('class', 'genre');
+      return g;
     }
   }, {
     ATTRS: {
       container: { setter: Y.one, value: null },
       template: { setter: Y.one, value: null }
-    }
+    },
   });
 }, '0.1', { requires: ['base', 'dd', 'collection'] });
