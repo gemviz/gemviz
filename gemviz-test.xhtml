@@ -14,6 +14,10 @@
     height: 98%;
     margin: 0 0;
   }
+
+  #paper {
+    overflow: auto;
+  }
   
   label {
     font-weight: bold;
@@ -33,16 +37,25 @@
     @namespace "http://www.w3.org/2000/svg";
     .genre {
       font-size: 24px;
-      fill: white;
-      stroke: none;
+    }
+    .mode-move .genre {
       cursor: pointer;
+    }
+    .mode-connect .genre {
+      cursor: crosshair;
     }
     .genre rect {
       stroke: black;
       fill: white;
     }
+    .genre.selected rect {
+      fill: black;
+    }
     .genre text {
       fill: black;
+    }
+    .genre.selected text {
+      fill: white;
     }
     .template {
       display: none;
@@ -63,6 +76,9 @@
 <!-- SIDEBAR -->
 <div class="yui-b">
 <label for="addGenre">Genres</label><br/>
+<ul id="genreList">
+<li class="genreListing template"></li>
+</ul>
 <input type="text" name="genreNmae" id="addGenre" placeholder="New Genre" />
 </div>
 
@@ -114,6 +130,13 @@ window.Y = YUI(YUI_config).use('gemviz-graph', 'node', function (Y) {
         genre = graph.newGenre(name);
     input.set('value', '');
   }, '#addGenre', 'down:13');
+
+  graph.on('didAddGenre', function (genre) {
+    var listing = Y.one('.genreListing.template').cloneNode(true);
+    listing.setAttribute('data-genre-uuid', Y.stamp(genre));
+    listing.set('text', genre.get('name'));
+    Y.one('#genreList').appendChild(listing);
+  });
 });
 ]]>
 </script>

@@ -39,13 +39,6 @@ YUI.add('gemviz-genre', function (Y) {
         translation.setTranslate.apply(translation, xy);
       };
 
-      g.on('click', function (evt) {
-        if (evt.altKey) {
-          evt.halt();
-          Genre.handleConnection(this);
-        }
-      }, this);
-
       this.text.on('dblclick', function (evt) {
         Y.use('gemviz-genre-editor', function (Y) {
           Y.GenreEditor.edit(genre, [evt.clientX + 15, evt.clientY + 15]);
@@ -54,7 +47,6 @@ YUI.add('gemviz-genre', function (Y) {
 
       if (config.origin)
         this.originDidChange({ newVal: config.origin });
-      this.get('parentNode').appendChild(g);
       this.nameDidChange({newVal: config.name});
 
       g.on('mousedown', function (evt) {
@@ -75,38 +67,6 @@ YUI.add('gemviz-genre', function (Y) {
     },
     originDidChange: function (evt) {
       this.g.setXY(evt.newVal);
-    },
-    dropHit: function (evt) {
-      var source = evt.drag.get('node'),
-          ourBounds = this.g._node.getClientRects()[0],
-          theirBounds = source._node.getClientRects()[0],
-          line = document.createElementNS("http://www.w3.org/2000/svg", "svg:line");
-      line.setAttribute('x1', (ourBounds.left + ourBounds.right)/2.0);
-      line.setAttribute('y1', (ourBounds.top + ourBounds.bottom)/2.0);
-      line.setAttribute('x2', (theirBounds.left + theirBounds.right)/2.0);
-      line.setAttribute('y2', (theirBounds.top + theirBounds.bottom)/2.0);
-      line.style.stroke = "black";
-      this.g.get('parentNode').insert(line, 0);
-    },
-    beginConnection: function () {
-      var body = Y.one(document.body),
-          line = document.createElementNS("http://www.w3.org/2000/svg", "svg:line"),
-          ourBounds = this.g._node.getClientRects()[0],
-          moveHandle;
-      line.setAttribute('x1', (ourBounds.left + ourBounds.right)/2.0);
-      line.setAttribute('y1', (ourBounds.top + ourBounds.bottom)/2.0);
-      line.style.stroke = "black";
-      this.g.get('parentNode').insertBefore(line, this.g);
-      moveHandle = body.on('mousemove', function (evt) {
-        line.setAttribute('x2', evt.clientX);
-        line.setAttribute('y2', evt.clientY);
-      }, this);
-      body.once('mouseup', function (evt) {
-        moveHandle.detach();
-        line.parentNode.removeChild(line);
-      }, this);
-    },
-    connectTo: function (target) {
     },
     toJSON: function () {
       return this.getAttrs(['name', 'origin']);
@@ -136,13 +96,7 @@ YUI.add('gemviz-genre', function (Y) {
             return [0, 0];
         }
       },
-      parentNode: { value: Y.one('#paper') },
       render: { value: true },
-    },
-    beginConnection: function (target) {
-      this.connectionSource = target;
-      Y.one('body').on('mousemove', function (evt) {
-      }, this);
     }
   });
 }, '0.1', { requires: ['base', 'dd', 'collection'] });

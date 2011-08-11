@@ -25,41 +25,94 @@ YUI.add('gemviz-graph', function (Y) {
     initializer: function (config) {
       this.instances = {};
 
-      var dragDelegate = this.DD = new Y.DD.Delegate({
-        cont: config.container,
-        dragMode: 'intersect',
-        nodes: '.genre',
-        target: true
-      });
-      dragDelegate.on('drag:start', this.onDragStart, this);
-      dragDelegate.on('drag:end', this.onDragEnd, this);
-      dragDelegate.on('drag:drophit', this.onDropHit, this);
-      dragDelegate.on('drag:dropmiss', this.onDropMiss, this);
+      var container = this.get('container'),
+          dragDelegate = this.DD = new Y.DD.Delegate({
+            cont: config.container,
+            dragMode: 'intersect',
+            nodes: '.genre'
+          });
+      dragDelegate.on('drag:mouseDown', this._onMouseDown, this);
+      dragDelegate.on('drag:end', this._onDragEnd, this);
 
-      this.publish('didAddGenre', {});
-    },
-    addGenre: function (genre) {
-      var stamp = Y.stamp(genre);
-      this.instances[stamp] = genre;
-      this.fire('didAddGenre', genre);
+      container.delegate('mousedown', function (evt) {
+        evt.currentTarget.setAttribute('class', 'genre selected');
+      }, '.genre');
+
+      container.delegate('mouseup', function (evt) {
+        var g = evt.currentTarget;
+        if (! g.getAttribute('class').match(/connecting/))
+          g.setAttribute('class', 'genre');
+      }, '.genre');
+
+      this.after('modeChange', function (evt) {
+        // !! pending YUI support for addClass on SVG elements
+        container.setAttribute('class', 'mode-' + evt.newVal);
+      });
+      this.set('mode', config.mode || 'move');
+
+      this.publish('addGenre', {defaultFn: Y.bind(this._addGenre, this)});
     },
     newGenre: function (name) {
       var genre = new gemviz.Genre({
             name: name,
             g: this._newGenreG()
           });
-      this.addGenre(genre);
+      this.fire('addGenre', {genre: genre});
       return genre;
+    },
+    _addGenre: function (evt) {
+      var genre = evt.genre,
+          stamp = Y.stamp(genre);
+      this.instances[stamp] = genre;
+      genre.after('destroy', this._removeGenre, this);
+    },
+    _removeGenre: function (evt) {
+      var genre = evt.currentTarget,
+          stamp = Y.stamp(genre);
+      delete this.instances[stamp];
     },
     _newGenreG: function () {
       var g = this.get('template').cloneNode(true);
       // Remove the 'template' class. removeClass does not work on SVG elements.
+      this.get('container').appendChild(g);
       g.setAttribute('class', 'genre');
       return g;
+    },
+    _onMouseDown: function (evt) {
+      if (this.get('mode') == 'connect') {
+        evt.halt();
+        this._connectG(evt.ev.currentTarget);
+      }
+    },
+    _onDragEnd: function (evt) {
+      evt.target.get('node').setAttribute('class', 'genre');
+    },
+    _connectG: function (g) {
+      if (this.connectFrom) {
+        if (this.connectFrom == g)
+          this._resetConnection();
+        else
+          this._finishConnection(g.genre);
+      } else {
+        this._startConnection(g.genre);
+      }
+    },
+    _startConnection: function (genre) {
+      genre.g.setAttribute('class', 'genre connecting selected');
+      this.connectFrom = genre.g;
+    },
+    _finishConnection: function (connectTo) {
+      // ...
+      this._resetConnection();
+    },
+    _resetConnection: function () {
+      this.connectFrom.setAttribute('class', 'genre');
+      delete this.connectFrom;
     }
   }, {
     ATTRS: {
       container: { setter: Y.one, value: null },
+      mode: { value: null },
       template: { setter: Y.one, value: null }
     },
   });
