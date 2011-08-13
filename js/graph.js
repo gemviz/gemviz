@@ -40,7 +40,7 @@ YUI.add('gemviz-graph', function (Y) {
 
       container.delegate('mouseup', function (evt) {
         var g = evt.currentTarget;
-        if (! g.getAttribute('class').match(/connecting/))
+        if (g != this.connectFrom)
           g.setAttribute('class', 'genre');
       }, '.genre');
 

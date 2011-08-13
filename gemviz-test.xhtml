@@ -22,6 +22,14 @@
   label {
     font-weight: bold;
   }
+  .tool {
+    cursor: pointer;
+    padding: 4px;
+  }
+  .tool.selected {
+    padding: 2px;
+    border: 2px solid blue;
+  }
 </style>
 <meta name="copyright" content="Copyright 2011" />
 <meta name="author" content="Peter Abrahamsen" />
@@ -74,7 +82,10 @@
 </div>
 
 <!-- SIDEBAR -->
-<div class="yui-b">
+<div id="sidebar" class="yui-b">
+<img src="images/tool-move.png" height="30" data-tool-name="move" class="tool selected" />
+<img src="images/tool-connect.png" data-tool-name="connect" class="tool" />
+<br />
 <label for="addGenre">Genres</label><br/>
 <ul id="genreList">
 <li class="genreListing template"></li>
@@ -136,6 +147,15 @@ window.Y = YUI(YUI_config).use('gemviz-graph', 'node', function (Y) {
     listing.setAttribute('data-genre-uuid', Y.stamp(genre));
     listing.set('text', genre.get('name'));
     Y.one('#genreList').appendChild(listing);
+  });
+
+  Y.delegate('click', function (evt) {
+    graph.set('mode', evt.currentTarget.getAttribute('data-tool-name'));
+  }, '#sidebar', '.tool');
+
+  graph.after('modeChange', function (evt) {
+    Y.one('.tool.selected').removeClass('selected');
+    Y.one('[data-tool-name=' + evt.newVal + ']').addClass('selected');
   });
 });
 ]]>
