@@ -37,10 +37,11 @@ YUI.add('gemviz-genre', function (Y) {
       // Called by Drag 'n Drop to relocate the element
       g.setXY = function (xy) {
         translation.setTranslate.apply(translation, xy);
+        genre.set('origin', xy);
       };
 
       if (config.origin)
-        this.originDidChange({ newVal: config.origin });
+        g.setXy(config.origin);
       this.nameDidChange({newVal: config.name});
 
       g.on('mousedown', function (evt) {
@@ -58,9 +59,6 @@ YUI.add('gemviz-genre', function (Y) {
       text.set('text', evt.newVal);
       this.rect.setAttribute('width', text._node.getComputedTextLength() + 20);
       //this.rect.setAttribute('height', Math.round(bbox.height) + 10);
-    },
-    originDidChange: function (evt) {
-      this.g.setXY(evt.newVal);
     },
     toJSON: function () {
       return this.getAttrs(['name', 'origin']);

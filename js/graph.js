@@ -23,8 +23,7 @@ YUI.add('gemviz-graph', function (Y) {
   var gemviz = Y.namespace('gemviz'),
       Graph = gemviz.Graph = Y.Base.create('graph', Y.Base, [], {
     initializer: function (config) {
-      this.instances = {};
-      this.connections = {};
+      this.genresById = {};
 
       var container = this.get('container'),
           dragDelegate = this.DD = new Y.DD.Delegate({
@@ -41,7 +40,7 @@ YUI.add('gemviz-graph', function (Y) {
 
       container.delegate('mouseup', function (evt) {
         var g = evt.currentTarget;
-        if (g != this.connectFrom)
+        if (g !== this.connectFrom)
           g.setAttribute('class', 'genre');
       }, '.genre', this);
 
@@ -52,8 +51,6 @@ YUI.add('gemviz-graph', function (Y) {
       this.set('mode', config.mode || 'move');
 
       this.publish('addGenre', {defaultFn: Y.bind(this._addGenre, this)});
-      this.publish('removeGenre', {defaultFn: Y.bind(this._removeGenre, this)});
-      this.publish('connect', {defaultFn: Y.bind(this._connect, this)});
     },
     newGenre: function (name) {
       var genre = new gemviz.Genre({
@@ -66,15 +63,19 @@ YUI.add('gemviz-graph', function (Y) {
     _addGenre: function (evt) {
       var genre = evt.genre,
           stamp = Y.stamp(genre);
-      this.instances[stamp] = genre;
-      genre.after('destroy', function (evt) {
-        this.fire('removeGenre', {genre: genre});
+      this.genresById[stamp] = genre;
+      genre.once('destroy', function (evt) {
+        this.removeGenre(genre);
       }, this);
     },
-    _removeGenre: function (evt) {
-      var genre = evt.genre,
-          stamp = Y.stamp(genre);
-      delete this.instances[stamp];
+    removeGenre: function (genre) {
+      var stamp = Y.stamp(genre),
+          connections = Connection.byGenreId[stamp],
+          i;
+      for (i = 0; i < connections.length; i++) {
+        connections[i].destroy();
+      }
+      delete this.genresById[stamp];
     },
     _newGenreG: function () {
       var g = this.get('template').cloneNode(true);
@@ -93,61 +94,85 @@ YUI.add('gemviz-graph', function (Y) {
       evt.target.get('node').setAttribute('class', 'genre');
     },
     _connectG: function (g) {
+      var connection
       if (this.connectFrom) {
-        if (this.connectFrom == g) {
-          this._resetConnection();
-        } else {
-          this.fire('connect', {
-            fromG: this.connectFrom,
-            toG: g
-          });
+        if (this.connectFrom !== g) {
+          connection = Connection.betweenGenres(this.connectFrom.genre, g.genre) || new Connection(this.connectFrom.genre, g.genre);
         }
+        this.connectFrom.setAttribute('class', 'genre');
+        delete this.connectFrom;
       } else {
-        this._startConnection(g.genre);
+        g.setAttribute('class', 'genre connecting selected');
+        this.connectFrom = g;
       }
-    },
-    _startConnection: function (genre) {
-      genre.g.setAttribute('class', 'genre connecting selected');
-      this.connectFrom = genre.g;
-    },
-    _connect: function (evt) {
-      var fromG = evt.fromG,
-          toG = evt.toG,
-          from = fromG.genre,
-          to = toG.genre,
-          fromConnections = this.connections[from],
-          toConnections = this.connections[to],
-          template = Y.one('.connection.template'),
-          line = template.cloneNode(true),
-          fromCenter = from.get('center'),
-          toCenter = to.get('center');
-
-      line.setAttribute('class', 'connection');
-      line.setAttribute('x1', fromCenter[0]);
-      line.setAttribute('y1', fromCenter[1]);
-      line.setAttribute('x2', toCenter[0]);
-      line.setAttribute('y2', toCenter[1]);
-      template.get('parentNode').insertBefore(line, template);
-
-      if (! fromConnections)
-        fromConnections = this.connections[from] = [];
-      fromConnections.push(line);
-
-      if (! toConnections)
-        toConnections = this.connections[to] = [];
-      toConnections.push(line);
-
-      this._resetConnection();
-    },
-    _resetConnection: function () {
-      this.connectFrom.setAttribute('class', 'genre');
-      delete this.connectFrom;
     }
   }, {
     ATTRS: {
       container: { setter: Y.one, value: null },
       mode: { value: null },
       template: { setter: Y.one, value: null }
-    },
+    }
   });
+
+  function Connection (from, to) {
+    var template = Y.one('.connection.template'),
+        line = template.cloneNode(true),
+        fromStamp = this.fromStamp = Y.stamp(from),
+        toStamp = this.toStamp = Y.stamp(to);
+    this.from = from;
+    this.to = to;
+    this.line = line;
+    Connection.register(this);
+
+    this.evtListeners = [
+      from.after('originChange', this.syncFrom, this),
+      to.after('originChange', this.syncTo, this)
+    ];
+    this.syncFrom();
+    this.syncTo();
+    line.setAttribute('class', 'connection');
+    template.get('parentNode').insertBefore(line, template);
+  }
+  Connection.prototype = {
+    destroy: function () {
+      var evtListeners = this.evtListeners,
+          i;
+      for (i = 0; i < evtListeners; i++) {
+        evtListeners[i].detach();
+      }
+      delete Connection.byGenreIds[this.fromStamp][this.toStamp];
+      delete Connection.byGenreIds[this.toStamp][this.fromStamp];
+      this.line.remove();
+    },
+    syncFrom: function () {
+      var fromCenter = this.from.get('center');
+      this.line.setAttribute('x1', fromCenter[0]);
+      this.line.setAttribute('y1', fromCenter[1]);
+    },
+    syncTo: function () {
+      var toCenter = this.to.get('center');
+      this.line.setAttribute('x2', toCenter[0]);
+      this.line.setAttribute('y2', toCenter[1]);
+    }
+  };
+  Connection.byGenreIds = {};
+  Connection.register = function (connection) {
+    var registry = Connection.byGenreIds,
+        from = connection.from,
+        to = connection.to;
+    if (! registry[from])
+      registry[from] = {};
+    if (! registry[to])
+      registry[to] = {};
+
+    registry[from][to] = connection;
+    registry[to][from] = connection;
+  };
+  Connection.betweenGenres = function (left, right) {
+    var leftStamp = Y.stamp(left),
+        rightStamp = Y.stamp(right),
+        candidates = Connection.byGenreIds[leftStamp];
+    if (candidates)
+      return candidates[rightStamp];
+  };
 }, '0.1', { requires: ['base', 'dd', 'collection'] });
