@@ -73,6 +73,14 @@ YUI.add('gemviz-genre', function (Y) {
     }
   }, {
     ATTRS: {
+      center: { getter: function () {
+        var origin = this.g.getXY(),
+            rect = this.g.one('rect');
+        return [
+          origin[0] + parseFloat(rect.getAttribute('width')) / 2.0,
+          origin[1] + parseFloat(rect.getAttribute('height')) / 2.0
+        ];
+      }},
       g: {
         setter: Y.one,
       },

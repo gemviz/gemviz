@@ -24,6 +24,7 @@ YUI.add('gemviz-graph', function (Y) {
       Graph = gemviz.Graph = Y.Base.create('graph', Y.Base, [], {
     initializer: function (config) {
       this.instances = {};
+      this.connections = {};
 
       var container = this.get('container'),
           dragDelegate = this.DD = new Y.DD.Delegate({
@@ -52,6 +53,7 @@ YUI.add('gemviz-graph', function (Y) {
 
       this.publish('addGenre', {defaultFn: Y.bind(this._addGenre, this)});
       this.publish('removeGenre', {defaultFn: Y.bind(this._removeGenre, this)});
+      this.publish('connect', {defaultFn: Y.bind(this._connect, this)});
     },
     newGenre: function (name) {
       var genre = new gemviz.Genre({
@@ -92,10 +94,14 @@ YUI.add('gemviz-graph', function (Y) {
     },
     _connectG: function (g) {
       if (this.connectFrom) {
-        if (this.connectFrom == g)
+        if (this.connectFrom == g) {
           this._resetConnection();
-        else
-          this._finishConnection(g.genre);
+        } else {
+          this.fire('connect', {
+            fromG: this.connectFrom,
+            toG: g
+          });
+        }
       } else {
         this._startConnection(g.genre);
       }
@@ -104,8 +110,33 @@ YUI.add('gemviz-graph', function (Y) {
       genre.g.setAttribute('class', 'genre connecting selected');
       this.connectFrom = genre.g;
     },
-    _finishConnection: function (connectTo) {
-      // ...
+    _connect: function (evt) {
+      var fromG = evt.fromG,
+          toG = evt.toG,
+          from = fromG.genre,
+          to = toG.genre,
+          fromConnections = this.connections[from],
+          toConnections = this.connections[to],
+          template = Y.one('.connection.template'),
+          line = template.cloneNode(true),
+          fromCenter = from.get('center'),
+          toCenter = to.get('center');
+
+      line.setAttribute('class', 'connection');
+      line.setAttribute('x1', fromCenter[0]);
+      line.setAttribute('y1', fromCenter[1]);
+      line.setAttribute('x2', toCenter[0]);
+      line.setAttribute('y2', toCenter[1]);
+      template.get('parentNode').insertBefore(line, template);
+
+      if (! fromConnections)
+        fromConnections = this.connections[from] = [];
+      fromConnections.push(line);
+
+      if (! toConnections)
+        toConnections = this.connections[to] = [];
+      toConnections.push(line);
+
       this._resetConnection();
     },
     _resetConnection: function () {
