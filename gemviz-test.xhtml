@@ -142,8 +142,9 @@ window.Y = YUI(YUI_config).use('gemviz-graph', 'node', function (Y) {
     input.set('value', '');
   }, '#addGenre', 'down:13');
 
-  graph.on('didAddGenre', function (genre) {
-    var listing = Y.one('.genreListing.template').cloneNode(true);
+  graph.after('addGenre', function (evt) {
+    var genre = evt.genre,
+        listing = Y.one('.genreListing.template').cloneNode(true);
     listing.setAttribute('data-genre-uuid', Y.stamp(genre));
     listing.set('text', genre.get('name'));
     Y.one('#genreList').appendChild(listing);

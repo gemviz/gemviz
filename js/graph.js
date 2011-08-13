@@ -42,7 +42,7 @@ YUI.add('gemviz-graph', function (Y) {
         var g = evt.currentTarget;
         if (g != this.connectFrom)
           g.setAttribute('class', 'genre');
-      }, '.genre');
+      }, '.genre', this);
 
       this.after('modeChange', function (evt) {
         // !! pending YUI support for addClass on SVG elements
