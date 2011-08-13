@@ -39,12 +39,6 @@ YUI.add('gemviz-genre', function (Y) {
         translation.setTranslate.apply(translation, xy);
       };
 
-      this.text.on('dblclick', function (evt) {
-        Y.use('gemviz-genre-editor', function (Y) {
-          Y.GenreEditor.edit(genre, [evt.clientX + 15, evt.clientY + 15]);
-        });
-      }, this);
-
       if (config.origin)
         this.originDidChange({ newVal: config.origin });
       this.nameDidChange({newVal: config.name});
