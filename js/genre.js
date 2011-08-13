@@ -55,7 +55,7 @@ YUI.add('gemviz-genre', function (Y) {
       }, this);
     },
     destructor: function () {
-      delete Genre.instances[Y.stsamp(this)];
+      this.g.remove();
     },
     // NB: text length and size are not available until the element is in the DOM
     nameDidChange: function (evt) {

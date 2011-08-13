@@ -30,6 +30,12 @@
     padding: 2px;
     border: 2px solid blue;
   }
+  .genreListing .remove {
+    color: red;
+  }
+  .template {
+    display: none;
+  }
 </style>
 <meta name="copyright" content="Copyright 2011" />
 <meta name="author" content="Peter Abrahamsen" />
@@ -65,9 +71,6 @@
     .genre.selected text {
       fill: white;
     }
-    .template {
-      display: none;
-    }
   </style>
   <svg:defs>
   </svg:defs>
@@ -88,7 +91,7 @@
 <br />
 <label for="addGenre">Genres</label><br/>
 <ul id="genreList">
-<li class="genreListing template"></li>
+<li class="genreListing template"><span class="name">name</span> <span class="remove">x</span></li>
 </ul>
 <input type="text" name="genreNmae" id="addGenre" placeholder="New Genre" />
 </div>
@@ -145,9 +148,23 @@ window.Y = YUI(YUI_config).use('gemviz-graph', 'node', function (Y) {
   graph.after('addGenre', function (evt) {
     var genre = evt.genre,
         listing = Y.one('.genreListing.template').cloneNode(true);
+    listing.genre = genre;
+    listing.setAttribute('class', 'genreListing');
     listing.setAttribute('data-genre-uuid', Y.stamp(genre));
-    listing.set('text', genre.get('name'));
+    listing.one('.name').set('text', genre.get('name'));
     Y.one('#genreList').appendChild(listing);
+  });
+
+  Y.delegate('click', function (evt) {
+    var g = evt.currentTarget.ancestor('.genreListing'),
+        genre = g.genre;
+    genre.destroy();
+  }, '#sidebar', '.genreListing .remove');
+
+  graph.after('removeGenre', function (evt) {
+    var genre = evt.genre,
+        listing = Y.one('[data-genre-uuid=' + Y.stamp(genre) + ']');
+    listing.remove();
   });
 
   Y.delegate('click', function (evt) {

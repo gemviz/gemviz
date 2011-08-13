@@ -51,6 +51,7 @@ YUI.add('gemviz-graph', function (Y) {
       this.set('mode', config.mode || 'move');
 
       this.publish('addGenre', {defaultFn: Y.bind(this._addGenre, this)});
+      this.publish('removeGenre', {defaultFn: Y.bind(this._removeGenre, this)});
     },
     newGenre: function (name) {
       var genre = new gemviz.Genre({
@@ -64,10 +65,12 @@ YUI.add('gemviz-graph', function (Y) {
       var genre = evt.genre,
           stamp = Y.stamp(genre);
       this.instances[stamp] = genre;
-      genre.after('destroy', this._removeGenre, this);
+      genre.after('destroy', function (evt) {
+        this.fire('removeGenre', {genre: genre});
+      }, this);
     },
     _removeGenre: function (evt) {
-      var genre = evt.currentTarget,
+      var genre = evt.genre,
           stamp = Y.stamp(genre);
       delete this.instances[stamp];
     },
